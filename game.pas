@@ -8,37 +8,34 @@ Type
 		destination : integer;
 	End;
 var
-	arrowFile : Text;
-	N : integer; {number of circles}
-	k : integer; {number of arrows}
-	i : integer; {iterator}
-	s : string; {buffer for arrow directions}
-	nextCircle : integer; {value of next circle}
+arrowFile : text;
+
+	N, k, i, nextCircle :integer;
 	arrayOfArrows : array of arrow;
-	arrayofStrings : string;	
 	currentCircle : integer;
 	arrayOfCircleVisited : array of integer;
 	numCirclesVisited : integer;
-
 	{*
 	this will create the array of arrow struct
 	place this int the loop reading the file
-	sets the source and destination int. used the destination in to set the pointer.
-	*}
-procedure assignArrow();
-	begin
-		for i:= 0 to (k - 1) do 
-			begin
-				val(	s[1], arrayOfArrows[i].source);
-				val(	 s[3], arrayOfArrows[i].destination);
 
-			end;
+	*}
+procedure assignArrow(var s : string);
+	begin
+		val(	s[1], arrayOfArrows[i].source);
+		val(	 s[3], arrayOfArrows[i].destination);
+		dec(arrayOfArrows[i].source);
+		dec(arrayOfArrows[i].destination);
 	end;
 {*
 	read file opens file, reads first two lines, then assigns N, k values
 	then sets length for arrays and reads the rest of the file to the arrayofStrings 
 *}
 procedure readFile();
+
+	var
+		s : string;
+
 	begin
 	assign(arrowFile, FILENAME);
 	reset(arrowFile);
@@ -46,13 +43,12 @@ procedure readFile();
 	readln(arrowFile, k);
 	
 		{use N and k to set lenth of arrays, then read the rest of the file}
-	setLength(arrayOfCircleVisited, N);
-	setLength(arrayOfArrows, k );
-	setLength(arrayOfStrings, k);
+	setLength(arrayOfCircleVisited, (N - 1));
+	setLength(arrayOfArrows, (k - 1) );
 	for i:= 0 to (k - 1) do
 		begin
 			readln(arrowFile, s);
-			assignArrow();
+			assignArrow(s);
 		end;
 	close(arrowFile);
 	end;
@@ -63,59 +59,59 @@ procedure readFile();
 	*}
 
 
-	{*
-	get random number
-	mod number to k
-	check if souce of arrow is current else try again
-	*}
-procedure getNextCircle();
-var
-	r, thisCircleVisited: integer;
-
-	begin
-		r := random(k);
-		thisCircleVisited := arrayOfCircleVisited[currentCircle];
-		if (r = thisCircleVisited ) then
-			nextCircle := r
-		else
-			getNextCircle;
-	end;
-
-
 procedure goToNextCircle();
 var
-	thisCircleVisited : integer;
+	r, thisCircleVisited : integer;
 
 	begin
 
-		thisCircleVisited := arrayOfCircleVisited[currentCircle];
-		if (thisCircleVisited = 0) then	
-			inc(numCirclesVisited);
+		thisCircleVisited := arrayOfCircleVisited[currentCircle + 1]; {number of times current circle has been visited}
+		if (thisCircleVisited = 0) then	;
+		begin
+			inc(numCirclesVisited);  {increment counter for distinct visits}
+		end;
+
 		inc(arrayOfCircleVisited[currentCircle]);
+
 		if ( numCirclesVisited = N ) then
+		begin
 			exit;
-	getNextCircle();
+		end;
+	randomize;
+	repeat
+		r := random(k - 1) 	
+	until arrayOfArrows[r].source = currentCircle;
+	nextCircle := arrayOfArrows[r].destination;
 	currentCircle := nextCircle;
-	goToNextCircle;
+	goToNextCircle();
 	end;
 
 begin   {main}
 
-	randomize;
 
 	readFile();
-	assignArrow();
 	currentCircle := 0;
 	numCirclesVisited := 0;
 	for i := 0 to (N -1) do
 		begin
 		arrayOfCircleVisited[i] := 0;
-		end;
-	goToNextCircle();
+	end;
+	
+
+		writeln(N);
+		writeln(k);
+for i :=0 to (k - 1) do 
+begin
+
+		writeln(arrayOfArrows[i].source);
+		writeln(arrayOfArrows[i].destination);
+	end;
+		goToNextCircle();
 	for i:=0 to (N-1) do 
 	begin 
+
 		writeln(arrayOfCircleVisited[i]);
 	end;
-writeln('pressenter to exit');
-readln;
+
+
 end.

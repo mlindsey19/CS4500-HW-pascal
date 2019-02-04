@@ -1,7 +1,5 @@
 program circleGame;
 
-uses math;
-
 const
 	FILENAME = 'HW1infile.txt';
 Type
@@ -15,7 +13,7 @@ arrowFile, outfile : text;
 
 	max, numCirclesVisited, currentCircle, sum, N, k, i, nextCircle :integer;
 	arrayOfArrows : array of arrow;
-	arrayOfCircleVisited : array of integer;
+	arrayOfCircleVisited : array of longint;
 	avg : real;
 
 procedure assignArrow(var s : string);
@@ -30,12 +28,6 @@ var
 		p:= pos(' ', s);
 		delete(s,p, p);
 		dst := s;
-
-
-		writeln(p);
-		writeln(src);
-		writeln(dst);
-		writeln(s,'x');
 
 		val(	src, arrayOfArrows[i].source);
 		val(	 dst, arrayOfArrows[i].destination);
@@ -70,7 +62,10 @@ var
 	randomize;
 	repeat
 			if (arrayOfCircleVisited[currentCircle] = 0) then	
+			begin
 				inc(numCirclesVisited); 
+				writeln('working.. ', numCirclesVisited,'/',N);
+			end;
 
 		inc(arrayOfCircleVisited[currentCircle]);
 

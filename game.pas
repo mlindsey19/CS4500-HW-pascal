@@ -20,6 +20,8 @@ Type {struct for arrow with source (current circle) and destination}
 		source	    : integer; 
 		destination : integer;
 	End;
+{******************************************************}
+
 var
 arrowFile, outfile : text; {variable to hold text files}
 
@@ -33,10 +35,19 @@ i is itorator for whole program(meh its set to 0 each time) nextCircle is placeh
 	arrayOfCircleVisited : array of longint; {holds number of times visited for each circle}
 	avg : real;{avg visit per circle}
 
+	{hw2 vars}
+	countArray: array[1..20] of integer;{for sorting}
+	thisCirclePathOut: array[0..18] of integer;{only needs 19, move to local**}
+	wellConnectedCircls: array[0..19] of integer;{once full, graph is strongly connected}
+
+
 	{*
 	this procedure parses the test file and created the arrow array
 	the dec() fuction maps the arrows in the file to match the index in circle array 0-N
 	*}
+
+{******************************************************}
+
 procedure assignArrow(var s : string);
 var
 	src, dst : string;
@@ -50,11 +61,15 @@ var
 		delete(s,p, p);{this extra delete is in case there is a extra space after the second value}
 		dst := s;
 
+		inc(countArray[dst]);{increments count arrat for sorting}
+
 		val(	src, arrayOfArrows[i].source);
 		val(	 dst, arrayOfArrows[i].destination);
 		dec(arrayOfArrows[i].source);  {these decreased by one so they match the array index}
 		dec(arrayOfArrows[i].destination);
 	end;
+
+{******************************************************}
 	{*
 	opens the input textfile, reads number of circle and arrows and sets the length of their
 	repsctive arrays
@@ -68,7 +83,7 @@ var
 
 begin
 
-assign(arrowFile, FILENAME);
+	assign(arrowFile, FILENAME);
 	reset(arrowFile);
 	readln(arrowFile, N);
 	readln(arrowFile, k);
@@ -82,9 +97,9 @@ assign(arrowFile, FILENAME);
 		end;
 
 
-assign(outfile, 'HW1lindseyOutfile.txt');
-		rewrite(outfile);
-		b:=0;
+	assign(outfile, 'HW1lindseyOutfile.txt');
+	rewrite(outfile);
+	b:=0;
 
 	if a <> k then {if a does not equal k} 
 begin
@@ -110,6 +125,7 @@ end;
 	if b = 1 then 
 	halt(-1); {exits program}
 end;
+{******************************************************}
 
 procedure readFile(); {this will read the file, it reassigns N, k because of the reset}
 var
@@ -133,6 +149,7 @@ var
 		end;
 	close(arrowFile);
 	end;
+{******************************************************}
 
 procedure goToNextCircle();
 var
@@ -161,6 +178,7 @@ var
 
 	until numCirclesVisited = N;
 	end;
+{******************************************************}
 	{adds all the visits}
 procedure sumChecks();
 begin
@@ -169,6 +187,7 @@ begin
 			sum := sum + arrayOfCircleVisited[i];
 		end;
 end;
+{******************************************************}
 {sets max visit for stats}
 procedure maxChecks();
 begin
@@ -179,6 +198,7 @@ begin
 		max:= arrayOfCircleVisited[i];
 	end;
 end;
+{******************************************************}
 begin   {main}
 
 	readFile();

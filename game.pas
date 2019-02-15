@@ -12,7 +12,7 @@ visits, the avg number of visits and max visits
 *}
 
 program circleGame;
-
+Uses math, sysutils;
 const
 	FILENAME = 'HW1infile.txt'; {name of input file}
 Type {struct for arrow with source (current circle) and destination}
@@ -36,10 +36,39 @@ i is itorator for whole program(meh its set to 0 each time) nextCircle is placeh
 	avg : real;{avg visit per circle}
 
 	{hw2 vars}
+	setOfArrows : array of arrow;
 	countArray: array[1..20] of integer;{for sorting}
-	thisCirclePathOut: array[0..18] of integer;{only needs 19, move to local**}
-	wellConnectedCircls: array[0..19] of integer;{once full, graph is strongly connected}
+	wellConnectedCircls: array[1..20] of boolean;{once full, graph is strongly connected}
+	tinyArraySet : array of string; {to check arrow already exists linearly, arrow struct would need nlogn passes }
+	numUnqArrow : integer;
 
+{******************************************************}
+
+
+procedure addToSet(var arrow1 : arrow );
+var
+	arrowStr : string;
+
+begin
+	if arrow1.source < 10 then 
+		 arrowStr := '0'+ intToStr(arrow1.source)
+	else 
+		arrowStr := intToStr(arrow1.source);
+
+	if arrow1.destination < 10 then 
+		arrowStr := arrowStr + '0'+ intToStr(arrow1.destination)
+	else 
+		 arrowStr := arrowStr + intToStr(arrow1.destination);
+	for i := 1 to numUnqArrow do
+		if arrowStr = tinyArraySet[i] then
+			exit;
+	inc(numUnqArrow);
+	setLength(tinyArraySet, numUnqArrow);
+	tinyArraySet[numUnqArrow] := arrowStr;
+end;	
+
+
+{******************************************************}
 
 	{*
 	this procedure parses the test file and created the arrow array
@@ -51,7 +80,7 @@ i is itorator for whole program(meh its set to 0 each time) nextCircle is placeh
 procedure assignArrow(var s : string);
 var
 	src, dst : string;
-	p :integer;
+	p  : integer;
 	begin
 
 		p := pos(' ', s);
@@ -61,12 +90,13 @@ var
 		delete(s,p, p);{this extra delete is in case there is a extra space after the second value}
 		dst := s;
 
-		inc(countArray[dst]);{increments count arrat for sorting}
 
 		val(	src, arrayOfArrows[i].source);
 		val(	 dst, arrayOfArrows[i].destination);
-		dec(arrayOfArrows[i].source);  {these decreased by one so they match the array index}
-		dec(arrayOfArrows[i].destination);
+
+		inc(countArray[ arrayOfArrows[i].destination ]);{increments count arrat for sorting}
+
+		addToSet(arrayOfArrows[i] );
 	end;
 
 {******************************************************}
@@ -199,16 +229,53 @@ begin
 	end;
 end;
 {******************************************************}
+
+procedure isGraphStrCntd(var numArrows: integer);
+var
+	numberOfPath2UnqCir : integer; {when == number of Circles -> go to next}
+	thisCirclePathOut: array of boolean;
+	maxExits, indexOfMax, j : integer;
+
+begin
+	setLength(thisCirclePathOut, N);
+	maxExits := MaxIntValue(countArray);
+	for i := 1 to N do 
+	begin
+		thisCirclePathOut[i] := false;
+{ this gets the arrow that has the arrows pointing at it        }
+{ all arrows pointing at the arrow will be well connected after }
+		if countArray[i] = maxExits then
+		begin 
+			indexOfMax := i;
+			countArray[i] := 0; {on the next full pass this will not be max}
+			for j := 1 to numArrows do 
+			begin
+				if setOfArrows[j].source = indexOfMax then 
+				begin
+					thisCirclePathOut[setOfArrows[j].destination] := true;	
+				end;
+
+			end;
+			break;
+		end;
+
+	end;
+
+end;
+
 begin   {main}
 
 	readFile();
 	currentCircle := 0;
 	numCirclesVisited := 0;
+	numUnqArrow := 0;
 
 	{sets all visits to 0}
-	for i := 0 to (N -1) do
+	for i := 1 to N do
 		begin
 		arrayOfCircleVisited[i] := 0;
+		countArray[i] := 0;
+		wellConnectedCircls[i] := false;
 	end;
 		goToNextCircle();
 		sumChecks();

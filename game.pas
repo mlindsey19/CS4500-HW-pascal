@@ -62,9 +62,12 @@ begin
 	for i := 1 to numUnqArrow do
 		if arrowStr = tinyArraySet[i] then
 			exit;
+
 	inc(numUnqArrow);
 	setLength(tinyArraySet, numUnqArrow);
 	tinyArraySet[numUnqArrow] := arrowStr;
+	setOfArrows[numUnqArrow].source := arrow1.source;
+	setOfArrows[numUnqArrow].destination := arrow1.destination;
 end;	
 
 
@@ -238,7 +241,12 @@ var
 
 begin
 	setLength(thisCirclePathOut, N);
-	maxExits := MaxIntValue(countArray);
+	maxExits := 0;
+
+	for i:=1 to N do
+		if maxExits < countArray[i] then
+			maxExits := countArray[i];
+
 	for i := 1 to N do 
 	begin
 		thisCirclePathOut[i] := false;

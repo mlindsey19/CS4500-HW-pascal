@@ -60,14 +60,15 @@ begin
 	else 
 		 arrowStr := arrowStr + intToStr(arrow1.destination);
 	for i := 1 to numUnqArrow do
-		if arrowStr = tinyArraySet[i] then
+		if arrowStr = tinyArraySet[i - 1] then
 			exit;
 
 	inc(numUnqArrow);
 	setLength(tinyArraySet, numUnqArrow);
-	tinyArraySet[numUnqArrow] := arrowStr;
-	setOfArrows[numUnqArrow].source := arrow1.source;
-	setOfArrows[numUnqArrow].destination := arrow1.destination;
+	setLength(setOfArrows, numUnqArrow);
+	tinyArraySet[numUnqArrow - 1] := arrowStr;
+	setOfArrows[numUnqArrow - 1].source := arrow1.source;
+	setOfArrows[numUnqArrow - 1].destination := arrow1.destination;
 end;	
 
 
@@ -240,6 +241,7 @@ var
 	maxExits, indexOfMax, j : integer;
 
 begin
+	numberOfPath2UnqCir := 1; {starts with path to itself}
 	setLength(thisCirclePathOut, N);
 	maxExits := 0;
 
@@ -277,6 +279,10 @@ begin   {main}
 	currentCircle := 0;
 	numCirclesVisited := 0;
 	numUnqArrow := 0;
+
+
+	{isGraphStrCntd(k);}
+
 
 	{sets all visits to 0}
 	for i := 1 to N do

@@ -30,7 +30,7 @@ max holds max visit any circle, numCircleVisisted counts number of disinct visit
 repesents node being "visited", sum holds total check, N is number of circles, k is number of arrows,
 i is itorator for whole program(meh its set to 0 each time) nextCircle is placeholder for next visit
 *}
-	max, numCirclesVisited, currentCircle, sum, N, k, i, nextCircle :integer;
+	max, numCirclesVisited, currentCircle, sum, N, it, k, nextCircle :integer;
 	arrayOfArrows : array of arrow;
 	arrayOfCircleVisited : array of longint; {holds number of times visited for each circle}
 	avg : real;{avg visit per circle}
@@ -45,30 +45,31 @@ i is itorator for whole program(meh its set to 0 each time) nextCircle is placeh
 {******************************************************}
 
 
-procedure addToSet(var arrow1 : arrow );
+procedure addToSet(var source: integer; dest : integer  );
 var
 	arrowStr : string;
-
+	z : integer;
 begin
-	if arrow1.source < 10 then 
-		 arrowStr := '0'+ intToStr(arrow1.source)
-	else 
-		arrowStr := intToStr(arrow1.source);
 
-	if arrow1.destination < 10 then 
-		arrowStr := arrowStr + '0'+ intToStr(arrow1.destination)
+	if source < 10 then 
+		 arrowStr := '0'+ intToStr(source)
 	else 
-		 arrowStr := arrowStr + intToStr(arrow1.destination);
-	for i := 1 to numUnqArrow do
-		if arrowStr = tinyArraySet[i - 1] then
+		arrowStr := intToStr(source);
+
+	if dest < 10 then 
+		arrowStr := arrowStr + '0'+ intToStr(dest)
+	else 
+		 arrowStr := arrowStr + intToStr(dest);
+	for z := 1 to numUnqArrow do
+		if arrowStr = tinyArraySet[z - 1] then
 			exit;
 
 	inc(numUnqArrow);
 	setLength(tinyArraySet, numUnqArrow);
 	setLength(setOfArrows, numUnqArrow);
 	tinyArraySet[numUnqArrow - 1] := arrowStr;
-	setOfArrows[numUnqArrow - 1].source := arrow1.source;
-	setOfArrows[numUnqArrow - 1].destination := arrow1.destination;
+	setOfArrows[numUnqArrow - 1].source := source;
+	setOfArrows[numUnqArrow - 1].destination := dest;
 end;	
 
 
@@ -81,10 +82,11 @@ end;
 
 {******************************************************}
 
-procedure assignArrow(var s : string);
+procedure assignArrow(var s : string; i: integer);
 var
 	src, dst : string;
-	p  : integer;
+	source, dest, p  : integer;
+	
 	begin
 
 		p := pos(' ', s);
@@ -96,12 +98,23 @@ var
 
 
 		val(	src, arrayOfArrows[i].source);
+			write(arrayOfArrows[i].source);
 		val(	 dst, arrayOfArrows[i].destination);
+			writeln(arrayOfArrows[i].destination);
 
 		inc(countArray[ arrayOfArrows[i].destination ]);{increments count arrat for sorting}
+	write(arrayOfArrows[i].source);
+			writeln(arrayOfArrows[i].destination);
 
-		addToSet(arrayOfArrows[i] );
-	end;
+			source := arrayOfArrows[i].source;
+			dest := arrayOfArrows[i].destination;
+
+		addToSet(source, dest);
+	write(arrayOfArrows[i].source);
+			writeln(arrayOfArrows[i].destination);
+
+
+			end;
 
 {******************************************************}
 	{*
@@ -164,6 +177,7 @@ end;
 procedure readFile(); {this will read the file, it reassigns N, k because of the reset}
 var
 		s : string;
+		x,i :integer;
 	begin
 	
 	checkFile();
@@ -179,9 +193,15 @@ var
 	for i:= 0 to (k - 1)  do
 		begin
 			readln(arrowFile, s);
-			assignArrow(s);
+			assignArrow(s, i);
 		end;
 	close(arrowFile);
+	 
+		for x:= 0 to ( k-1) do
+		begin
+			write(arrayOfArrows[x].source);
+			writeln(arrayOfArrows[x].destination);
+		end;
 	end;
 {******************************************************}
 
@@ -203,7 +223,8 @@ var
 
 		{randomly chose an arrow until it has the same source number as the current cirlce}
 		repeat
-			r := random(k); {range 0-(k-1)}
+			r := random(k); {range 0..k-1}
+			writeln(arrayOfArrows[r].source);
 		until arrayOfArrows[r].source = currentCircle;
 
 		{move to next circle}
@@ -215,6 +236,8 @@ var
 {******************************************************}
 	{adds all the visits}
 procedure sumChecks();
+var
+	i : integer;
 begin
 	for i:= 0 to (N - 1) do
 		begin
@@ -224,6 +247,8 @@ end;
 {******************************************************}
 {sets max visit for stats}
 procedure maxChecks();
+var
+	i : integer;
 begin
 	max:= arrayOfCircleVisited[0];
 	for i:= 1 to (N-1) do
@@ -238,7 +263,7 @@ procedure isGraphStrCntd(var numArrows: integer);
 var
 	numberOfPath2UnqCir : integer; {when == number of Circles -> go to next}
 	thisCirclePathOut: array of boolean;
-	maxExits, indexOfMax, j : integer;
+	maxExits, indexOfMax, j, i: integer;
 
 begin
 	numberOfPath2UnqCir := 1; {starts with path to itself}
@@ -273,10 +298,12 @@ begin
 
 end;
 
+
+
 begin   {main}
 
 	readFile();
-	currentCircle := 0;
+	currentCircle := 1;
 	numCirclesVisited := 0;
 	numUnqArrow := 0;
 
@@ -285,11 +312,11 @@ begin   {main}
 
 
 	{sets all visits to 0}
-	for i := 1 to N do
+	for it := 1 to N do
 		begin
-		arrayOfCircleVisited[i] := 0;
-		countArray[i] := 0;
-		wellConnectedCircls[i] := false;
+		arrayOfCircleVisited[it] := 0;
+		countArray[it] := 0;
+		wellConnectedCircls[it] := false;
 	end;
 		goToNextCircle();
 		sumChecks();

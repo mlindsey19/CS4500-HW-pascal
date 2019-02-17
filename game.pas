@@ -37,8 +37,8 @@ i is itorator for whole program(meh its set to 0 each time) nextCircle is placeh
 
 	{hw2 vars}
 	setOfArrows : array of arrow;
-	countArray: array[1..20] of integer;{for sorting}
-	wellConnectedCircls: array[1..20] of boolean;{once full, graph is strongly connected}
+	countArray: array of integer;{for sorting}
+	wellConnectedCircls: array of boolean;{once full, graph is strongly connected}
 	tinyArraySet : array of string; {to check arrow already exists linearly, arrow struct would need nlogn passes }
 	numUnqArrow : integer;
 
@@ -65,8 +65,6 @@ begin
 			exit;
 
 	inc(numUnqArrow);
-	setLength(tinyArraySet, numUnqArrow);
-	setLength(setOfArrows, numUnqArrow);
 	tinyArraySet[numUnqArrow - 1] := arrowStr;
 	setOfArrows[numUnqArrow - 1].source := source;
 	setOfArrows[numUnqArrow - 1].destination := dest;
@@ -87,34 +85,30 @@ var
 	src, dst : string;
 	source, dest, p  : integer;
 	
-	begin
+begin
 
-		p := pos(' ', s);
-		src := copy(s, 1, (p -1));
-		delete(s, 1, p);
-		p:= pos(' ', s);
-		delete(s,p, p);{this extra delete is in case there is a extra space after the second value}
-		dst := s;
-
-
-		val(	src, arrayOfArrows[i].source);
-			write(arrayOfArrows[i].source);
-		val(	 dst, arrayOfArrows[i].destination);
-			writeln(arrayOfArrows[i].destination);
-
-		inc(countArray[ arrayOfArrows[i].destination ]);{increments count arrat for sorting}
-	write(arrayOfArrows[i].source);
-			writeln(arrayOfArrows[i].destination);
-
-			source := arrayOfArrows[i].source;
-			dest := arrayOfArrows[i].destination;
-
-		addToSet(source, dest);
-	write(arrayOfArrows[i].source);
-			writeln(arrayOfArrows[i].destination);
+	p := pos(' ', s);
+	src := copy(s, 1, (p -1));
+	delete(s, 1, p);
+	p:= pos(' ', s);
+	delete(s,p, p);{this extra delete is in case there is a extra space after the second value}
+	dst := s;
 
 
-			end;
+	val(	src, arrayOfArrows[i].source);
+	val(	 dst, arrayOfArrows[i].destination);
+	{set arrow and then decrease value to equal idex of array of circles}
+	dec(arrayOfArrows[i].source);
+	dec(arrayOfArrows[i].destination);
+
+	inc(countArray[ arrayOfArrows[i].destination ]);{increments count arrat for sorting}
+
+	source := arrayOfArrows[i].source;
+	dest := arrayOfArrows[i].destination;
+
+	addToSet(source, dest);
+
+end;
 
 {******************************************************}
 	{*
@@ -149,36 +143,36 @@ begin
 	b:=0;
 
 	if a <> k then {if a does not equal k} 
-begin
-	writeln('the number of arrows did not match the specifications');
-	writeln(outfile, 'the number of arrows did not match the specifications');
-	b:=1;
-end;		
+	begin
+		writeln('the number of arrows did not match the specifications');
+		writeln(outfile, 'the number of arrows did not match the specifications');
+		b:=1;
+	end;		
 
 	if (N < 2) or (N > 10) then 
-begin
-	writeln('incorrect number of circles');
-	writeln(outfile, 'incorect number of circles');
-	b:=1;
-end;		
+	begin
+		writeln('incorrect number of circles');
+		writeln(outfile, 'incorect number of circles');
+		b:=1;
+	end;		
 	if (k > 100) or (k < N) then 
-begin
-	writeln('incorrect number of arrows');
-	writeln(outfile, 'incorrect number of arrows');
-	b:=1;
-end;		
+	begin
+		writeln('incorrect number of arrows');
+		writeln(outfile, 'incorrect number of arrows');
+		b:=1;
+	end;		
 
 		close(outfile);
 	if b = 1 then 
-	halt(-1); {exits program}
+		halt(-1); {exits program}
 end;
 {******************************************************}
 
 procedure readFile(); {this will read the file, it reassigns N, k because of the reset}
 var
-		s : string;
-		x,i :integer;
-	begin
+	s : string;
+	i :integer;
+begin
 	
 	checkFile();
 
@@ -189,19 +183,21 @@ var
 	
 	{set lenghth of arrays to values from file}
 	setLength(arrayOfCircleVisited, N );
+	setLength(wellConnectedCircls, N);
 	setLength(arrayOfArrows, k );
-	for i:= 0 to (k - 1)  do
-		begin
-			readln(arrowFile, s);
-			assignArrow(s, i);
-		end;
+	setLength(tinyArraySet, k);
+	setLength(setOfArrows, k);
+	setLength(countArray, k);
+
+
+	for i:= 0 to (k - 1) do
+	begin
+		readln(arrowFile, s);
+		assignArrow(s, i);
+	end;
+
 	close(arrowFile);
 	 
-		for x:= 0 to ( k-1) do
-		begin
-			write(arrayOfArrows[x].source);
-			writeln(arrayOfArrows[x].destination);
-		end;
 	end;
 {******************************************************}
 
@@ -209,22 +205,21 @@ procedure goToNextCircle();
 var
 	r : integer;
 
-	begin
+begin
 
 	randomize; {creates random seed each time, can not go inside loop}
 	repeat
-			if (arrayOfCircleVisited[currentCircle] = 0) then	
-			begin
-				inc(numCirclesVisited);  {this is total distinct visits, when it reache N, all circles have been seen}
-				writeln('working.. ', numCirclesVisited,'/',N); {let user know of progress}
-			end;
+		if (arrayOfCircleVisited[currentCircle] = 0) then	
+		begin
+			inc(numCirclesVisited);  {this is total distinct visits, when it reache N, all circles have been seen}
+			writeln('working.. ', numCirclesVisited,'/',N); {let user know of progress}
+		end;
 
 		inc(arrayOfCircleVisited[currentCircle]); {check on indivitual circle for stats}
 
 		{randomly chose an arrow until it has the same source number as the current cirlce}
 		repeat
 			r := random(k); {range 0..k-1}
-			writeln(arrayOfArrows[r].source);
 		until arrayOfArrows[r].source = currentCircle;
 
 		{move to next circle}
@@ -232,7 +227,7 @@ var
 		currentCircle := nextCircle;
 
 	until numCirclesVisited = N;
-	end;
+end;
 {******************************************************}
 	{adds all the visits}
 procedure sumChecks();
@@ -240,9 +235,9 @@ var
 	i : integer;
 begin
 	for i:= 0 to (N - 1) do
-		begin
-			sum := sum + arrayOfCircleVisited[i];
-		end;
+	begin
+		sum := sum + arrayOfCircleVisited[i];
+	end;
 end;
 {******************************************************}
 {sets max visit for stats}
@@ -250,11 +245,11 @@ procedure maxChecks();
 var
 	i : integer;
 begin
-	max:= arrayOfCircleVisited[0];
-	for i:= 1 to (N-1) do
-		begin
-	if max < arrayOfCircleVisited[i] then
-		max:= arrayOfCircleVisited[i];
+	max:= arrayOfCircleVisited[1];
+	for i:= 1 to (N - 1) do  
+	begin
+		if max < arrayOfCircleVisited[i] then
+			max:= arrayOfCircleVisited[i];
 	end;
 end;
 {******************************************************}
@@ -270,11 +265,11 @@ begin
 	setLength(thisCirclePathOut, N);
 	maxExits := 0;
 
-	for i:=1 to N do
+	for i:= 0 to (N - 1) do
 		if maxExits < countArray[i] then
 			maxExits := countArray[i];
 
-	for i := 1 to N do 
+	for i := 0 to (N - 1) do 
 	begin
 		thisCirclePathOut[i] := false;
 { this gets the arrow that has the arrows pointing at it        }
@@ -312,20 +307,20 @@ begin   {main}
 
 
 	{sets all visits to 0}
-	for it := 1 to N do
-		begin
+	for it := 0 to (N - 1) do
+	begin
 		arrayOfCircleVisited[it] := 0;
 		countArray[it] := 0;
 		wellConnectedCircls[it] := false;
 	end;
 		goToNextCircle();
 		sumChecks();
-		avg := sum / N;	
+		avg :=  sum / N;	
 		maxChecks();
 		writeln('Number of Circles: ', N);
 		writeln('Number of Arrows: ', k);
 		writeln('Totall Checks: ', sum);
-		writeln('Averger number of checks per circle: ', avg);
+		writeln('Averger number of checks per circle: ', formatFloat('##.#',avg));
 		writeln('Max number of check for any circle: ', max);
 
 		assign(outfile, 'HW1lindseyOutfile.txt');
@@ -334,7 +329,7 @@ begin   {main}
 		writeln(outfile,'Number of Circles: ', N);
 		writeln(outfile,'Number of Arrows: ', k);
 		writeln(outfile, 'Totall Checks: ', sum);
-		writeln(outfile, 'Averger number of checks per circle: ', avg);
+		writeln(outfile, 'Averger number of checks per circle: ', formatFloat('##.#',avg));
 		writeln(outfile, 'Max number of check for any circle: ', max);
 		close(outfile);
 

@@ -38,9 +38,10 @@ i is itorator for whole program(meh its set to 0 each time) nextCircle is placeh
 	{hw2 vars}
 	setOfArrows : array of arrow;
 	countArray: array of integer;{for sorting}
-	wellConnectedCircls: array of boolean;{once full, graph is strongly connected}
+	wellConnectedCircles: array of boolean;{once full, graph is strongly connected}
 	tinyArraySet : array of string; {to check arrow already exists linearly, arrow struct would need nlogn passes }
 	numUnqArrow : integer;
+	numWellconCircles: integer;{circles with path to every other circle}
 
 {******************************************************}
 
@@ -183,11 +184,11 @@ begin
 	
 	{set lenghth of arrays to values from file}
 	setLength(arrayOfCircleVisited, N );
-	setLength(wellConnectedCircls, N);
+	setLength(wellConnectedCircles, N);
 	setLength(arrayOfArrows, k );
 	setLength(tinyArraySet, k);
 	setLength(setOfArrows, k);
-	setLength(countArray, k);
+	setLength(countArray, N);
 
 
 	for i:= 0 to (k - 1) do
@@ -195,6 +196,7 @@ begin
 		readln(arrowFile, s);
 		assignArrow(s, i);
 	end;
+
 
 	close(arrowFile);
 	 
@@ -254,42 +256,113 @@ begin
 end;
 {******************************************************}
 
-procedure isGraphStrCntd(var numArrows: integer);
+procedure isGraphStrCntd();
 var
 	numberOfPath2UnqCir : integer; {when == number of Circles -> go to next}
 	thisCirclePathOut: array of boolean;
-	maxExits, indexOfMax, j, i: integer;
+	maxExits, indexOfMax, j, i, iter, firstCircle: integer;
 
 begin
-	numberOfPath2UnqCir := 1; {starts with path to itself}
 	setLength(thisCirclePathOut, N);
-	maxExits := 0;
-
+	iter := 0;
+	firstCircle := -1;
 	for i:= 0 to (N - 1) do
-		if maxExits < countArray[i] then
-			maxExits := countArray[i];
-
-	for i := 0 to (N - 1) do 
-	begin
-		thisCirclePathOut[i] := false;
-{ this gets the arrow that has the arrows pointing at it        }
-{ all arrows pointing at the arrow will be well connected after }
-		if countArray[i] = maxExits then
-		begin 
-			indexOfMax := i;
-			countArray[i] := 0; {on the next full pass this will not be max}
-			for j := 1 to numArrows do 
-			begin
-				if setOfArrows[j].source = indexOfMax then 
-				begin
-					thisCirclePathOut[setOfArrows[j].destination] := true;	
-				end;
-
-			end;
-			break;
+		if countArray[i] = 0 then
+		begin
+			writeln('not connected');
+			exit;
 		end;
 
-	end;
+	repeat
+		
+
+		numberOfPath2UnqCir := 1; {starts with path to itself}
+
+		maxExits := countArray[0];
+
+		for i:= 0 to (N - 1) do
+		begin
+			if maxExits < countArray[i] then
+				maxExits := countArray[i];
+			thisCirclePathOut[i] := false;
+		end;
+		
+
+		for i := 0 to (N - 1) do 
+			if countArray[i] = maxExits then
+			begin
+				indexOfMax := i;
+				countArray[i] := 0; {ddon the next full pass this will not be max}
+				thisCirclePathOut[indexOfMax] := true;
+				break;
+			end;
+		
+		if iter = 0 then
+			firstCircle := indexOfMax;	
+		inc(iter);
+
+	{ this gets the arrow that has the most arrows pointing at it        }
+	{ all arrows pointing at the arrow will be well connected if this one is }
+		if wellConnectedCircles[indexOfMax] = false then
+			for i := 0 to numUnqArrow do
+			begin
+				for j := 0 to numUnqArrow do 
+				begin {this adds unique destinations to array to verify paths from current circle} 
+					if (thisCirclePathOut[setOfArrows[j].source] = true) then
+					begin
+						if wellConnectedCircles[setOfArrows[j].destination] = true then
+						begin
+							numberOfPath2UnqCir := N;
+						end;
+						if numberOfPath2UnqCir = N then break;
+						thisCirclePathOut[setOfArrows[j].destination] := true;	
+						inc(numberOfPath2UnqCir);
+					end;
+				end;
+				if numberOfPath2UnqCir = N then
+				begin
+					break;
+				end;
+			end;
+
+
+		if (numberOfPath2UnqCir <> N) then
+			begin
+				writeln('not connected');
+				exit;
+			end;
+
+		
+		if  (wellConnectedCircles[setOfArrows[indexOfMax].source] = false) then 
+		begin
+			wellConnectedCircles[setOfArrows[indexOfMax].source] := true; 
+			for j:= 0 to numUnqArrow do
+				for i:= 0 to numUnqArrow do
+				begin
+					{	if setOfArrows[i].destination = indexOfMax then
+					begin
+						if wellConnectedCircles[setOfArrows[i].source] = false then
+							inc(numWellconCircles);
+
+						wellConnectedCircles[setOfArrows[i].source] := true;
+						if numWellconCircles = N then
+							writeln('graph is strongly connected');
+					end;}
+					if wellConnectedCircles[setOfArrows[i].destination] = true then
+					begin
+						if wellConnectedCircles[setOfArrows[i].source] = false then
+							inc(numWellconCircles);
+
+						wellConnectedCircles[setOfArrows[i].source] := true;
+						if numWellconCircles = N then
+						begin
+							writeln('graph is strongly connected');
+							exit;
+						end;
+					end;
+				end;
+		end;
+	until numWellconCircles = N;
 
 end;
 
@@ -297,13 +370,14 @@ end;
 
 begin   {main}
 
+	numUnqArrow := 0;
 	readFile();
 	currentCircle := 1;
 	numCirclesVisited := 0;
-	numUnqArrow := 0;
+	numWellconCircles := 1; {starts at one because first circle added does not increment this counter}
 
 
-	{isGraphStrCntd(k);}
+	isGraphStrCntd();
 
 
 	{sets all visits to 0}
@@ -311,8 +385,11 @@ begin   {main}
 	begin
 		arrayOfCircleVisited[it] := 0;
 		countArray[it] := 0;
-		wellConnectedCircls[it] := false;
+		wellConnectedCircles[it] := false;
 	end;
+	
+	if numWellconCircles = N then
+	begin
 		goToNextCircle();
 		sumChecks();
 		avg :=  sum / N;	
@@ -320,7 +397,7 @@ begin   {main}
 		writeln('Number of Circles: ', N);
 		writeln('Number of Arrows: ', k);
 		writeln('Totall Checks: ', sum);
-		writeln('Averger number of checks per circle: ', formatFloat('##.#',avg));
+		writeln('Average number of checks per circle: ', formatFloat('##.#',avg));
 		writeln('Max number of check for any circle: ', max);
 
 		assign(outfile, 'HW1lindseyOutfile.txt');
@@ -329,8 +406,8 @@ begin   {main}
 		writeln(outfile,'Number of Circles: ', N);
 		writeln(outfile,'Number of Arrows: ', k);
 		writeln(outfile, 'Totall Checks: ', sum);
-		writeln(outfile, 'Averger number of checks per circle: ', formatFloat('##.#',avg));
+		writeln(outfile, 'Average number of checks per circle: ', formatFloat('##.#',avg));
 		writeln(outfile, 'Max number of check for any circle: ', max);
 		close(outfile);
-
+	end;
 end.

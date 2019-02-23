@@ -1,0 +1,8 @@
+Number of circles: 10
+Number of arrows: 15
+Average total checks per game: 1.6
+Maximum number of check in a single game: 16
+Minimum number of check in a single game: 0
+Average number of checks per circle: .2
+Maximun number of single check circle in a game:: 8
+Minimun number of single check circle in a game:: 1

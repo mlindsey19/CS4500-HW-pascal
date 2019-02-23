@@ -1,14 +1,54 @@
 {*
 Mitch Lindsey
-2/3/19
+2/22/19
 cs4500
-hw1
+hw2
 
 this program will take an file with integers arranged to repespent
 circles and arrows pointing to the circls, This would create a map
 and the program randomly tranverses these arrows until each one has
 been seen. the program prints and creates a file with the sum of all 
 visits, the avg number of visits and max visits
+
+The main data stucture is an array of or record Arrow.
+Record Arrow is two interger values that represent the exit and 
+entry points of two circles. 
+
+The ciricles are represnted by an array of integters. This array is 
+incremented at the circles index when it is visited. The current circle
+is accounted for with a single integer cooresponding to the index in the
+array.
+
+To randomized the arrow selection out of a circle, a random arrow is 
+chosen from the array of ALL arrows and compared to the current circle
+variable. If the arrow source == current circle, curent circle is set
+to the arrow destination and circle array is incremented. if the source 
+of arrow does not match, another one is chosen until there is a match.
+
+**********
+Hw 2 
+
+The arrow array is reduced to a set for graph verification. The array of 
+all arrows is still used to to choose arrows
+
+As the array of all arrows is created, array of counters is increamented
+to keep track of the circle that has the most entry points. This circle
+is checked for a path to every other circle. 
+	-if this circle has a path to every circle, then all circles that
+	point to this are added to a list of "well conntected circles"
+	-if paths for this circle are not found, the graph is not strongly
+	connected
+The circles that are added to the well connected list are checked and any of 
+their entry arrow source circles are added to the list. This loop repeats
+untill a circle is found to not reach all circles or untll the well connected
+circle array is filled. A counter is incremented every time a circle is added
+to the list
+
+The first circle checked is assumed to have a path to itsef and because the set
+of arrows is initially check to verify that each circle has at least one entry 
+point.
+
+
 *}
 
 program circleGame;
@@ -30,10 +70,11 @@ max holds max visit any circle, numCircleVisisted counts number of disinct visit
 repesents node being "visited", sum holds total check, N is number of circles, k is number of arrows,
 i is itorator for whole program(meh its set to 0 each time) nextCircle is placeholder for next visit
 *}
-	max, numCirclesVisited, currentCircle, sum, N, it, k, nextCircle :integer;
+	currentCircle,  N, it, k, nextCircle,l :integer;
 	arrayOfArrows : array of arrow;
 	arrayOfCircleVisited : array of longint; {holds number of times visited for each circle}
-	avg : real;{avg visit per circle}
+	avg : array of real;{avg visit per circle}
+	sum, numCirclesVisited, max : array of integer;
 
 	{hw2 vars}
 	setOfArrows : array of arrow;
@@ -42,6 +83,7 @@ i is itorator for whole program(meh its set to 0 each time) nextCircle is placeh
 	tinyArraySet : array of string; {to check arrow already exists linearly, arrow struct would need nlogn passes }
 	numUnqArrow : integer;
 	numWellconCircles: integer;{circles with path to every other circle}
+	minSingleCircleGame, maxSingleCircleGame : integer;
 
 {******************************************************}
 
@@ -213,13 +255,13 @@ begin
 	repeat
 		if (arrayOfCircleVisited[currentCircle] = 0) then	
 		begin
-			inc(numCirclesVisited);  {this is total distinct visits, when it reache N, all circles have been seen}
-			writeln('working.. ', numCirclesVisited,'/',N); {let user know of progress}
+			inc(numCirclesVisited[it]);  {this is total distinct visits, when it reache N, all circles have been seen}
+			writeln('working.. ', numCirclesVisited[it],'/',N); {let user know of progress}
 		end;
 
 		inc(arrayOfCircleVisited[currentCircle]); {check on indivitual circle for stats}
 
-		{randomly chose an arrow until it has the same source number as the current cirlce}
+		{r)ndomly chose an arrow until it has the same source number as the current cirlce}
 		repeat
 			r := random(k); {range 0..k-1}
 		until arrayOfArrows[r].source = currentCircle;
@@ -228,7 +270,7 @@ begin
 		nextCircle := arrayOfArrows[r].destination;
 		currentCircle := nextCircle;
 
-	until numCirclesVisited = N;
+	until numCirclesVisited[it] = N;
 end;
 {******************************************************}
 	{adds all the visits}
@@ -238,7 +280,7 @@ var
 begin
 	for i:= 0 to (N - 1) do
 	begin
-		sum := sum + arrayOfCircleVisited[i];
+		sum[it] := sum[it] + arrayOfCircleVisited[i];
 	end;
 end;
 {******************************************************}
@@ -247,11 +289,11 @@ procedure maxChecks();
 var
 	i : integer;
 begin
-	max:= arrayOfCircleVisited[1];
+	max[it]:= arrayOfCircleVisited[1];
 	for i:= 1 to (N - 1) do  
 	begin
-		if max < arrayOfCircleVisited[i] then
-			max:= arrayOfCircleVisited[i];
+		if max[it] < arrayOfCircleVisited[i] then
+			max[it]:= arrayOfCircleVisited[i];
 	end;
 end;
 {******************************************************}
@@ -260,12 +302,10 @@ procedure isGraphStrCntd();
 var
 	numberOfPath2UnqCir : integer; {when == number of Circles -> go to next}
 	thisCirclePathOut: array of boolean;
-	maxExits, indexOfMax, j, i, iter, firstCircle: integer;
+	maxExits, indexOfMax, j, i : integer;
 
 begin
 	setLength(thisCirclePathOut, N);
-	iter := 0;
-	firstCircle := -1;
 	for i:= 0 to (N - 1) do
 		if countArray[i] = 0 then
 		begin
@@ -280,26 +320,24 @@ begin
 
 		maxExits := countArray[0];
 
+		{****************************************}
 		for i:= 0 to (N - 1) do
 		begin
-			if maxExits < countArray[i] then
+			if maxExits < countArray[i] then {this gets circle with most exits}
 				maxExits := countArray[i];
-			thisCirclePathOut[i] := false;
+			thisCirclePathOut[i] := false; {sets all path out to false}
 		end;
-		
-
+		{****************************************}
 		for i := 0 to (N - 1) do 
 			if countArray[i] = maxExits then
 			begin
 				indexOfMax := i;
-				countArray[i] := 0; {ddon the next full pass this will not be max}
-				thisCirclePathOut[indexOfMax] := true;
+				countArray[indexOfMax] := 0; {on the next full pass this will not be max, allowing another circle to be selected}
+				{thisCirclePathOut[indexOfMax] := true;}
 				break;
 			end;
+		{****************************************}
 		
-		if iter = 0 then
-			firstCircle := indexOfMax;	
-		inc(iter);
 
 	{ this gets the arrow that has the most arrows pointing at it        }
 	{ all arrows pointing at the arrow will be well connected if this one is }
@@ -308,7 +346,8 @@ begin
 			begin
 				for j := 0 to numUnqArrow do 
 				begin {this adds unique destinations to array to verify paths from current circle} 
-					if (thisCirclePathOut[setOfArrows[j].source] = true) then
+				{for each arrow source, has a path to that circle been seen}
+					if (thisCirclePathOut[setOfArrows[j].source] = true) or	(setOfArrows[j].source = indexOfMax) then
 					begin
 						if wellConnectedCircles[setOfArrows[j].destination] = true then
 						begin
@@ -319,13 +358,10 @@ begin
 						inc(numberOfPath2UnqCir);
 					end;
 				end;
-				if numberOfPath2UnqCir = N then
-				begin
-					break;
-				end;
+					if numberOfPath2UnqCir = N then	break;
 			end;
 
-
+		{if any circle does not have a unique path to each, the graph fails and exit}
 		if (numberOfPath2UnqCir <> N) then
 			begin
 				writeln('not connected');
@@ -339,15 +375,6 @@ begin
 			for j:= 0 to numUnqArrow do
 				for i:= 0 to numUnqArrow do
 				begin
-					{	if setOfArrows[i].destination = indexOfMax then
-					begin
-						if wellConnectedCircles[setOfArrows[i].source] = false then
-							inc(numWellconCircles);
-
-						wellConnectedCircles[setOfArrows[i].source] := true;
-						if numWellconCircles = N then
-							writeln('graph is strongly connected');
-					end;}
 					if wellConnectedCircles[setOfArrows[i].destination] = true then
 					begin
 						if wellConnectedCircles[setOfArrows[i].source] = false then
@@ -366,19 +393,87 @@ begin
 
 end;
 
+{******************************************************}
+procedure writeFile();
+var
+	avgChPerGame, avgChPerCircle : real;
+	maxChOfAGame, minChOfAGame : integer;
+begin
+	avgChPerGame:= 0;
+	avgChPerCircle :=0;
+	maxChOfAGame := 1;
+	minChOfAGame :=1;
+	
+	for it:=0 to 9 do 
+	begin
+		if maxChOfAGame < sum[it] then
+			maxChOfAGame := sum[it];
+		if minChOfAGame > sum[it] then
+			minChOfAGame := sum[it];
+		avgChPerGame := avgChPerGame + sum[it] ;
+	end;
+	
+	avgChPerGame := avgChPerGame / 10;
+	avgChPerCircle := avgChPerGame / N;
+		writeln('Number of circles: ', N);
+		writeln('Number of arrows: ', k);
+		writeln('Average total checks per game: ', formatFloat('##.#',avgChPerGame));
+		writeln('Maximum number of check in a single game: ', maxChOfAGame);
+		writeln('Minimum number of check in a single game: ', minChOfAGame);
 
+		writeln('Average number of checks per circle: ', formatFloat('##.#',avgChPerCircle));
+		writeln('Maximun number of single check circle in a game:: ', maxSingleCircleGame);
+		writeln('Minimun number of single check circle in a game:: ', minSingleCircleGame);
+
+		assign(outfile, 'HW2lindseyOutfile.txt');
+		rewrite(outfile);
+		writeln(outfile,'Number of circles: ', N);
+		writeln(outfile,'Number of arrows: ', k);
+		writeln(outfile,'Average total checks per game: ', formatFloat('##.#',avgChPerGame));
+		writeln(outfile,'Maximum number of check in a single game: ', maxChOfAGame);
+		writeln(outfile,'Minimum number of check in a single game: ', minChOfAGame);
+
+		writeln(outfile,'Average number of checks per circle: ', formatFloat('##.#',avgChPerCircle));
+		writeln(outfile,'Maximun number of single check circle in a game:: ', maxSingleCircleGame);
+		writeln(outfile,'Minimun number of single check circle in a game:: ', minSingleCircleGame);	
+		close(outfile);
+
+
+end;
+
+
+{******************************************************}
+
+procedure singleCheckCircles();
+var
+	i, singleCheckCircles :integer;
+begin
+	singleCheckCircles := 0;
+	for i:= 0 to N do 
+		if arrayOfCircleVisited[i] = 1 then 
+			inc(singleCheckCircles);
+	if minSingleCircleGame > singleCheckCircles then
+		minSingleCircleGame := singleCheckCircles;
+	if maxSingleCircleGame < singleCheckCircles then
+		maxSingleCircleGame := singleCheckCircles;
+end;
+
+{******************************************************}
 
 begin   {main}
 
 	numUnqArrow := 0;
 	readFile();
-	currentCircle := 1;
-	numCirclesVisited := 0;
 	numWellconCircles := 1; {starts at one because first circle added does not increment this counter}
-
-
+	minSingleCircleGame := 1;
+	maxSingleCircleGame := 1;
+	
 	isGraphStrCntd();
 
+	setLength(avg, 10);
+	setLength(sum, 10);
+	setLength(numCirclesVisited, 10);
+	setLength(max, 10);
 
 	{sets all visits to 0}
 	for it := 0 to (N - 1) do
@@ -390,24 +485,18 @@ begin   {main}
 	
 	if numWellconCircles = N then
 	begin
-		goToNextCircle();
-		sumChecks();
-		avg :=  sum / N;	
-		maxChecks();
-		writeln('Number of Circles: ', N);
-		writeln('Number of Arrows: ', k);
-		writeln('Totall Checks: ', sum);
-		writeln('Average number of checks per circle: ', formatFloat('##.#',avg));
-		writeln('Max number of check for any circle: ', max);
+		for it := 0 to 9 do 
+		begin
+			currentCircle := 1;
+			numCirclesVisited[it] := 0;
+		for l := 0 to (N - 1) do
+			arrayOfCircleVisited[l] := 0;
+			goToNextCircle();
+		end;
 
-		assign(outfile, 'HW1lindseyOutfile.txt');
-		rewrite(outfile);
-			
-		writeln(outfile,'Number of Circles: ', N);
-		writeln(outfile,'Number of Arrows: ', k);
-		writeln(outfile, 'Totall Checks: ', sum);
-		writeln(outfile, 'Average number of checks per circle: ', formatFloat('##.#',avg));
-		writeln(outfile, 'Max number of check for any circle: ', max);
-		close(outfile);
-	end;
+			sumChecks();
+			maxChecks();
+			singleCheckCircles();	
+		end;
+		writeFile();
 end.

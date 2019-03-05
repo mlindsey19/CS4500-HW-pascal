@@ -69,7 +69,7 @@ repesents node being "visited", sum holds total check, N is number of circles, k
 i is itorator for whole program(meh its set to 0 each time) nextCircle is placeholder for next visit
 *}
 
-	currentCircle,  N, it, k, nextCircle,l :integer;
+	currentCircle,  N, k, nextCircle :integer;
 	arrayOfArrows : array of arrow;
 	arrayOfCircleVisited : array of longint; {holds number of times visited for each circle}
 	avg :  real;{avg visit per circle}
@@ -85,7 +85,7 @@ i is itorator for whole program(meh its set to 0 each time) nextCircle is placeh
 	minSingleCircleGame, maxSingleCircleGame : integer;
 
 	{hw3 var}
-	NN, K2, maxArray, sumArray: array[0..2] of integer;
+	NArray, kArray, maxArray, sumArray: array[0..2] of integer;
 	avgArray : array[0..2] of real;
 	wcsem : integer;
 {******************************************************}
@@ -273,18 +273,23 @@ begin
 end;
 {******************************************************}
 	{adds all the visits}
-procedure sumChecks();
+procedure sumChecks(var filenum : integer);
 var
 	i : integer;
 begin
+	sum := 0;
+	avg := 0;
 	for i:= 0 to (N - 1) do
 	begin
 		sum := sum + arrayOfCircleVisited[i];
 	end;
+	avg := sum / N;
+	sumArray[filenum - 1] := sum;
+	avgArray[filenum - 1] := avg;
 end;
 {******************************************************}
 {sets max visit for stats}
-procedure maxChecks();
+procedure maxChecks(var filenum : integer);
 var
 	i : integer;
 begin
@@ -294,6 +299,7 @@ begin
 		if max < arrayOfCircleVisited[i] then
 			max:= arrayOfCircleVisited[i];
 	end;
+	maxArray[filenum - 1] := max;
 end;
 {******************************************************}
 
@@ -399,30 +405,48 @@ end;
 {******************************************************}
 procedure writeFile();
 var
-	avgChPerGame, avgChPerCircle : real;
-	maxChOfAGame, minChOfAGame : integer;
+	tavg: real;
+	 l, tsum,tmax,tarrows,tcircles: integer;
 begin
-	avgChPerGame:= 0;
-	avgChPerCircle :=0;
-	maxChOfAGame := 1;
-	minChOfAGame :=1;
+	tsum := 0;
+	tarrows := 0;
+	tcircles := 0;
+	tavg := avg;
+	tmax := max;
+	for l :=0 to 2 do 
+	begin
+		if tmax < maxArray[l] then
+			tmax := maxArray[l];
+		if tavg < avgArray[l] then
+			tavg := avgArray[l];
+		tsum := sumArray[l] + tsum;
+		tarrows := tarrows + kArray[l];
+		tcircles := tcircles + NArray[l];
+	end;
+
+	l:=9;
+	writeln('':l, 'sim1':l, 'sim2':l , 'sim3':l, 'total':l );
+
+	writeln('sum':l, sumArray[0]:l ,sumArray[1]:l,sumArray[2]:l,tsum:l );
+	writeln('avg':l,formatFloat('##.#',avgArray[0]) :l ,formatFloat('##.#',avgArray[1]):l,formatFloat('##.#',avgArray[2]):l,formatFloat('##.#',tavg):l );
+
+	writeln('max':l, maxArray[0]:l ,maxArray[1]:l,maxArray[2]:l,tmax:l );
+	writeln('arrows':l, kArray[0]:l ,kArray[1]:l,kArray[2]:l,tarrows:l );
+	writeln('circles':l, NArray[0]:l ,NArray[1]:l,NArray[2]:l,tcircles:l );
 	
-		writeln('Number of circles: ', N);
-		writeln('Number of arrows: ', k);
-		writeln('Average total checks per game: ', formatFloat('##.#',avgChPerGame));
 
-		writeln('Average number of checks per circle: ', formatFloat('##.#',avgChPerCircle));
+	writeln('Outfile name: lindseyHW3.txt');
+	assign(outfile, 'lindseyHW3.txt');
+	rewrite(outfile);
+	writeln(outfile, '':l, 'sim1':l, 'sim2':l , 'sim3':l, 'total':l );
 
-		assign(outfile, 'HW2lindseyOutfile.txt');
-		rewrite(outfile);
-		writeln(outfile,'Number of circles: ', N);
-		writeln(outfile,'Number of arrows: ', k);
-		writeln(outfile,'Average total checks per game: ', formatFloat('##.#',avgChPerGame));
-		writeln(outfile,'Maximum number of check in a single game: ', maxChOfAGame);
-		writeln(outfile,'Minimum number of check in a single game: ', minChOfAGame);
+	writeln(outfile, 'sum':l, sumArray[0]:l ,sumArray[1]:l,sumArray[2]:l,tsum:l );
+	writeln(outfile, 'avg':l,formatFloat('##.#',avgArray[0]) :l ,formatFloat('##.#',avgArray[1]):l,formatFloat('##.#',avgArray[2]):l,formatFloat('##.#',tavg):l );
 
-		writeln(outfile,'Average number of checks per circle: ', formatFloat('##.#',avgChPerCircle));
-		close(outfile);
+	writeln(outfile, 'max':l, maxArray[0]:l ,maxArray[1]:l,maxArray[2]:l,tmax:l );
+	writeln(outfile, 'arrows':l, kArray[0]:l ,kArray[1]:l,kArray[2]:l,tarrows:l );
+	writeln(outfile, 'circles':l, NArray[0]:l ,NArray[1]:l,NArray[2]:l,tcircles:l );
+	close(outfile);
 
 
 end;
@@ -446,27 +470,41 @@ end;
 
 {******************************************************}
 
-procedure resetCounts(var iit:integer);
+procedure resetCounts();
 var
 	i: integer;
 begin
-	numUnqArrow := 0;
 	numWellconCircles := 1;
 
+	wcsem := 0;
 	currentCircle := 1;
 	numCirclesVisited := 0;
 	for i := 0 to (N - 1) do
+	begin
 		arrayOfCircleVisited[i] := 0;
-
+		countArray[i] := 0;
+		wellConnectedCircles[i] := false;
+	end;
+	for i := 0 to numUnqArrow - 1 do
+		tinyArraySet[i] :='';
+	numUnqArrow := 0;
 end;
 
 function isFileGood(var filename:string):integer;
 begin
+	resetCounts();
 	if checkFile(filename) = 0 then
+	begin
 		readFile(filename);	
-	wcsem := 0;
-	isGraphStrCntd();
-	
+		isGraphStrCntd();
+	end
+	else
+	begin
+		N := 0;
+		k := 0;
+		resetCounts();
+		wcsem := 1;	
+	end;
 	isFileGood := wcsem;
 end;
 
@@ -488,28 +526,23 @@ begin
 	goodFiles := 0;
 	
 	repeat 
-		resetCounts(goodFiles);
 		filename := askForFile();
-		isFileGood(filename);
-		NN[goodFiles] := N;
-		K2[goodFiles] := k;
-		if wcsem = 0 then 
+		if isFileGood(filename) = 0 then 
 		begin
+			NArray[goodFiles] := N;
+			kArray[goodFiles] := k;
 			goodFiles := goodFiles + 1;
 			goToNextCircle();
-			sumChecks();
-			maxChecks();
+			sumChecks(goodFiles);
+			maxChecks(goodFiles);
 		end
-		else
-			writeln('improper file');
 	until goodFiles = 3;
 	
 end;
 
 
 begin   {main}
-
-
 	runThreeFiles();
 	writeFile();
+	readln();
 end.

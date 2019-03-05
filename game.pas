@@ -53,8 +53,6 @@ point.
 
 program circleGame;
 Uses math, sysutils;
-const
-	FILENAME = 'HW1infile.txt'; {name of input file}
 Type {struct for arrow with source (current circle) and destination}
 	arrow = Record
 		source	    : integer; 
@@ -70,11 +68,12 @@ max holds max visit any circle, numCircleVisisted counts number of disinct visit
 repesents node being "visited", sum holds total check, N is number of circles, k is number of arrows,
 i is itorator for whole program(meh its set to 0 each time) nextCircle is placeholder for next visit
 *}
+
 	currentCircle,  N, it, k, nextCircle,l :integer;
 	arrayOfArrows : array of arrow;
 	arrayOfCircleVisited : array of longint; {holds number of times visited for each circle}
-	avg : array of real;{avg visit per circle}
-	sum, numCirclesVisited, max : array of integer;
+	avg :  real;{avg visit per circle}
+	sum, numCirclesVisited, max : integer;
 
 	{hw2 vars}
 	setOfArrows : array of arrow;
@@ -85,6 +84,10 @@ i is itorator for whole program(meh its set to 0 each time) nextCircle is placeh
 	numWellconCircles: integer;{circles with path to every other circle}
 	minSingleCircleGame, maxSingleCircleGame : integer;
 
+	{hw3 var}
+	NN, K2, maxArray, sumArray: array[0..2] of integer;
+	avgArray : array[0..2] of real;
+	wcsem : integer;
 {******************************************************}
 
 
@@ -159,7 +162,7 @@ end;
 	repsctive arrays
 	*}
 
-procedure checkFile();
+function checkFile(var filename: string):integer;
 
 var
 	a, b :integer; {a is used to count the lines after 'k' to verify they match}
@@ -167,7 +170,7 @@ var
 
 begin
 
-	assign(arrowFile, FILENAME);
+	assign(arrowFile, filename);
 	reset(arrowFile);
 	readln(arrowFile, N);
 	readln(arrowFile, k);
@@ -180,7 +183,7 @@ begin
 			inc(a);
 		end;
 
-
+	
 	assign(outfile, 'HW1lindseyOutfile.txt');
 	rewrite(outfile);
 	b:=0;
@@ -205,21 +208,19 @@ begin
 		b:=1;
 	end;		
 
-		close(outfile);
-	if b = 1 then 
-		halt(-1); {exits program}
+	close(outfile);
+	checkFile := b;
+
 end;
 {******************************************************}
 
-procedure readFile(); {this will read the file, it reassigns N, k because of the reset}
+procedure readFile(var filename : string); {this will read the file, it reassigns N, k because of the reset}
 var
 	s : string;
 	i :integer;
 begin
-	
-	checkFile();
 
-	assign(arrowFile, FILENAME);
+	assign(arrowFile, filename);
 	reset(arrowFile);
 	readln(arrowFile, N);
 	readln(arrowFile, k);
@@ -232,13 +233,11 @@ begin
 	setLength(setOfArrows, k);
 	setLength(countArray, N);
 
-
 	for i:= 0 to (k - 1) do
 	begin
 		readln(arrowFile, s);
 		assignArrow(s, i);
 	end;
-
 
 	close(arrowFile);
 	 
@@ -255,8 +254,8 @@ begin
 	repeat
 		if (arrayOfCircleVisited[currentCircle] = 0) then	
 		begin
-			inc(numCirclesVisited[it]);  {this is total distinct visits, when it reache N, all circles have been seen}
-			writeln('working.. ', numCirclesVisited[it],'/',N); {let user know of progress}
+			inc(numCirclesVisited);  {this is total distinct visits, when it reache N, all circles have been seen}
+			writeln('working.. ', numCirclesVisited,'/',N); {let user know of progress}
 		end;
 
 		inc(arrayOfCircleVisited[currentCircle]); {check on indivitual circle for stats}
@@ -270,7 +269,7 @@ begin
 		nextCircle := arrayOfArrows[r].destination;
 		currentCircle := nextCircle;
 
-	until numCirclesVisited[it] = N;
+	until numCirclesVisited = N;
 end;
 {******************************************************}
 	{adds all the visits}
@@ -280,7 +279,7 @@ var
 begin
 	for i:= 0 to (N - 1) do
 	begin
-		sum[it] := sum[it] + arrayOfCircleVisited[i];
+		sum := sum + arrayOfCircleVisited[i];
 	end;
 end;
 {******************************************************}
@@ -289,11 +288,11 @@ procedure maxChecks();
 var
 	i : integer;
 begin
-	max[it]:= arrayOfCircleVisited[1];
+	max:= arrayOfCircleVisited[1];
 	for i:= 1 to (N - 1) do  
 	begin
-		if max[it] < arrayOfCircleVisited[i] then
-			max[it]:= arrayOfCircleVisited[i];
+		if max < arrayOfCircleVisited[i] then
+			max:= arrayOfCircleVisited[i];
 	end;
 end;
 {******************************************************}
@@ -310,6 +309,7 @@ begin
 		if countArray[i] = 0 then
 		begin
 			writeln('not connected');
+			wcsem := -1;
 			exit;
 		end;
 
@@ -365,6 +365,7 @@ begin
 		if (numberOfPath2UnqCir <> N) then
 			begin
 				writeln('not connected');
+				wcsem := -1;
 				exit;
 			end;
 
@@ -381,9 +382,11 @@ begin
 							inc(numWellconCircles);
 
 						wellConnectedCircles[setOfArrows[i].source] := true;
+
 						if numWellconCircles = N then
 						begin
 							writeln('graph is strongly connected');
+							wcsem := 0;
 							exit;
 						end;
 					end;
@@ -404,26 +407,11 @@ begin
 	maxChOfAGame := 1;
 	minChOfAGame :=1;
 	
-	for it:=0 to 9 do 
-	begin
-		if maxChOfAGame < sum[it] then
-			maxChOfAGame := sum[it];
-		if minChOfAGame > sum[it] then
-			minChOfAGame := sum[it];
-		avgChPerGame := avgChPerGame + sum[it] ;
-	end;
-	
-	avgChPerGame := avgChPerGame / 10;
-	avgChPerCircle := avgChPerGame / N;
 		writeln('Number of circles: ', N);
 		writeln('Number of arrows: ', k);
 		writeln('Average total checks per game: ', formatFloat('##.#',avgChPerGame));
-		writeln('Maximum number of check in a single game: ', maxChOfAGame);
-		writeln('Minimum number of check in a single game: ', minChOfAGame);
 
 		writeln('Average number of checks per circle: ', formatFloat('##.#',avgChPerCircle));
-		writeln('Maximun number of single check circle in a game:: ', maxSingleCircleGame);
-		writeln('Minimun number of single check circle in a game:: ', minSingleCircleGame);
 
 		assign(outfile, 'HW2lindseyOutfile.txt');
 		rewrite(outfile);
@@ -434,8 +422,6 @@ begin
 		writeln(outfile,'Minimum number of check in a single game: ', minChOfAGame);
 
 		writeln(outfile,'Average number of checks per circle: ', formatFloat('##.#',avgChPerCircle));
-		writeln(outfile,'Maximun number of single check circle in a game:: ', maxSingleCircleGame);
-		writeln(outfile,'Minimun number of single check circle in a game:: ', minSingleCircleGame);	
 		close(outfile);
 
 
@@ -460,43 +446,70 @@ end;
 
 {******************************************************}
 
-begin   {main}
-
+procedure resetCounts(var iit:integer);
+var
+	i: integer;
+begin
 	numUnqArrow := 0;
-	readFile();
-	numWellconCircles := 1; {starts at one because first circle added does not increment this counter}
-	minSingleCircleGame := 1;
-	maxSingleCircleGame := 1;
-	
+	numWellconCircles := 1;
+
+	currentCircle := 1;
+	numCirclesVisited := 0;
+	for i := 0 to (N - 1) do
+		arrayOfCircleVisited[i] := 0;
+
+end;
+
+function isFileGood(var filename:string):integer;
+begin
+	if checkFile(filename) = 0 then
+		readFile(filename);	
+	wcsem := 0;
 	isGraphStrCntd();
-
-	setLength(avg, 10);
-	setLength(sum, 10);
-	setLength(numCirclesVisited, 10);
-	setLength(max, 10);
-
-	{sets all visits to 0}
-	for it := 0 to (N - 1) do
-	begin
-		arrayOfCircleVisited[it] := 0;
-		countArray[it] := 0;
-		wellConnectedCircles[it] := false;
-	end;
 	
-	if numWellconCircles = N then
-	begin
-		for it := 0 to 9 do 
-		begin
-			currentCircle := 1;
-			numCirclesVisited[it] := 0;
-		for l := 0 to (N - 1) do
-			arrayOfCircleVisited[l] := 0;
-			goToNextCircle();
-		end;
+	isFileGood := wcsem;
+end;
 
+function askForFile():string;
+var
+	fname: string;
+begin
+	writeln('Enter filename with extention:');
+	readln(fname);
+	askForFile := fname;
+end;
+procedure runThreeFiles();
+var
+
+goodFiles: integer;
+filename : string;
+
+begin
+	goodFiles := 0;
+	
+	repeat 
+		resetCounts(goodFiles);
+		filename := askForFile();
+		isFileGood(filename);
+		NN[goodFiles] := N;
+		K2[goodFiles] := k;
+		if wcsem = 0 then 
+		begin
+			goodFiles := goodFiles + 1;
+			goToNextCircle();
 			sumChecks();
 			maxChecks();
-			singleCheckCircles();	
-		end;
-		writeFile();
+		end
+		else
+			writeln('improper file');
+	until goodFiles = 3;
+	
+end;
+
+
+begin   {main}
+
+
+	runThreeFiles();
+	writeFile();
 end.
